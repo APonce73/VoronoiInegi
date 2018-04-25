@@ -1,9 +1,10 @@
 library(shiny)
 library(leaflet)
 library(knitr)
-library(plotly)
-library(ggplot2)
-library(shinythemes)
+#library(plotly)
+library(tidyverse)
+#library(ggplot2)
+#library(shinythemes)
 library(shinydashboard)
 
 
@@ -12,7 +13,7 @@ library(shinydashboard)
 #library(ggplot2movies)
 
 shinyUI(navbarPage(
-  title = "Proyecto Global de  Maíces", id = "nav",
+  title = "Tianguis de México", id = "nav",
 
  #Ventana 1
     tabPanel("Mapa", 
@@ -31,7 +32,7 @@ shinyUI(navbarPage(
                       #   h4("$$$"),
             
            
-            absolutePanel(top = 100, right = 40,
+            absolutePanel(top = 50, right = 40,
                           
                           #Raza Primaria
                 #          selectInput(inputId = "Raza_primaria",
@@ -45,9 +46,9 @@ shinyUI(navbarPage(
                 #                      c("All", levels(TableL$Complejo_racial))),
                           
                           #Por Estado
-                          selectInput(inputId = "Estado",
+                          selectInput(inputId = "NOM_ENT",
                                       label = h6("Estado:"),
-                                      c("All", levels(TableL$Estado)))
+                                      c("All", levels(FinalTT$NOM_ENT)))
                           
                           
                          # h6("Descargar los datos seleccionados"),

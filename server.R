@@ -1,23 +1,72 @@
 library(shiny)
 library(leaflet)
 library(RColorBrewer)
-library(dplyr)
 library(knitr)
 library(vcd)
 library(grid)
 library(plotly)
-library(ggplot2)
-library(googleVis)
+#library(googleVis)
 library(igraph)
+library(tidyverse)
 
 # Define server logic for slider examples
 shinyServer(function(input, output, session) {
   
   
+  #Ventana 1
+  #### For the map in leaflet
+  points <- reactive({
+    #input$update
+    #TableL <- TableL()
+    req(input$NOM_ENT)
+    
+    if (input$NOM_ENT != "All") {
+      FinalTT <- FinalTT[FinalTT$NOM_ENT %in% input$NOM_ENT,]
+    }else FinalTT <- FinalTT
+    
+  })
+  
+ 
+    
+  #head(TianguisFF)
+  #names(TianguisFF)
+  #summary(TianguisFF)
+  #vtess <- deldir(Tianguis_1[,6:7])
+  
+  #class(vtess)
+  #summary(vtess)
+  #dim(as.data.frame(vtess$summary$dir.area))
+  
+  #summary(vtess$delsgs)
+  #summary(vtess$dirsgs)
+  #summary(vtess$ind.orig)
+  
+  
+  
+  
   #P el mapa en leaflet
   output$mymap1 <- renderLeaflet(
     {
-  
+      Goldberg <- points()
+      #Goldberg$Variable1 <- as.factor(Goldberg$Variable1)
+      
+      Tianguis_1 <- Goldberg %>%
+        #filter(Variable1 != "NE") %>%
+        filter(Variable1 == "Tianguis")
+      
+      Mercados_1 <- Goldberg %>%
+       # filter(Variable1 != "NE") %>%
+        filter(Variable1 != "Tianguis")
+      
+      
+      vor_pts <- SpatialPointsDataFrame(cbind(Tianguis_1$lng,
+                                              Tianguis_1$lat),
+                                        Tianguis_1, match.ID = TRUE)
+      
+      vor <- SPointsDF_to_voronoi_SPolysDF(vor_pts)
+      
+      pal <- colorFactor(c("navy", "red", "black"), domain = c("Tianguis", "Maiz", "Sin_Maiz"))
+      
       
       leaflet() %>% 
         #  addTiles() %>%
@@ -31,28 +80,29 @@ shinyServer(function(input, output, session) {
                     #              as.character(vor@data$tot))
         ) %>%
         #Para los tianguis
-        addCircleMarkers(data = TianguisFF, 
+        addCircleMarkers(data = Tianguis_1, 
                          ~lng, ~lat, 
-                         popup = paste(sep = " ","Municipio:",TianguisFF$NOM_MUN,
-                                       "<br/>","Localidad:",TianguisFF$NOM_LOC,
-                                       "<br/>","Tipo:",TianguisFF$Tianguis),
-                         radius = ~ifelse(Tianguis == "Tianguis", 7, 6),
-                         color = ~pal(Tianguis),
+                         popup = paste(sep = " ","Municipio:",Tianguis_1$NOM_MUN,
+                                       "<br/>","Localidad:",Tianguis_1$NOM_LOC,
+                                       "<br/>","Tipo:",Tianguis_1$Variable1),
+                         radius = ~ifelse(Variable1 == "Tianguis", 7, 6),
+                         color = ~pal(Variable1),
                          stroke = FALSE, fillOpacity = 0.5) %>%
         
         #Para los sitios con maíz
-        addCircleMarkers(data = TianguisHH, 
+        addCircleMarkers(data = Mercados_1, 
                          ~lng, ~lat, 
-                         popup = paste(sep = " ","Municipio:",TianguisHH$NOM_MUN,
-                                       "<br/>","Localidad:",TianguisHH$NOM_LOC,
-                                       "<br/>","Tipo:",TianguisHH$Tianguis),
-                         radius = ~ifelse(Tianguis == "Tianguis", 4, 6),
-                         color = ~pal(Tianguis),
-                         stroke = FALSE, fillOpacity = 0.5,
-                         clusterOptions = markerClusterOptions(showCoverageOnHover = T, 
-                                                               spiderfyOnMaxZoom = T,
-                                                               zoomToBoundsOnClick = T,
-                                                               spiderfyDistanceMultiplier = 2))
+                         popup = paste(sep = " ","Municipio:",Mercados_1$NOM_MUN,
+                                       "<br/>","Localidad:",Mercados_1$NOM_LOC,
+                                       "<br/>","Tipo:",Mercados_1$Variable1),
+                         radius = ~ifelse(Variable1 == "Maiz", 4, 4),
+                         color = ~pal(Variable1),
+                         stroke = FALSE, fillOpacity = 0.5
+                    #    clusterOptions = markerClusterOptions(showCoverageOnHover = T, 
+                    #                                           spiderfyOnMaxZoom = T,
+                    #                                           zoomToBoundsOnClick = T,
+                    #                                           spiderfyDistanceMultiplier = 2)
+                         )
       
       
   
@@ -111,46 +161,7 @@ shinyServer(function(input, output, session) {
 #    } 
 #  })
   
-  observe({
-    proxy1 <- leafletProxy("mymap1")
-    #proxy1 %>% clearControls()
-    # Teo2 <- points1()
-    if (input$tripsacum) {
-      Trip2 <- Trip1
-      proxy1 %>%
-        #Teo1 == Teocintle
-        addCircleMarkers(Trip2$long, Trip2$lat, weight = 3, radius = 1, color = '#FA5', 
-                         opacity = 1,
-                         popup = paste(sep = " ",
-                                       "Taxa:",Trip2$Taxa,"<br/>", 
-                                       #"Municipio:",Trip2$Municipio, "<br/>",
-                                       "Municipio:",Trip2$Municipio))
-      
-    }
-    
-  })
-  
-  observe({
-    proxy2 <- leafletProxy("mymap1")
-    #proxy1 %>% clearControls()
-   # Teo2 <- points1()
-    if (input$teocintle) {
-      Teo2 <- Teo1
-      proxy2 %>%
-        #Teo1 == Teocintle
-      addCircleMarkers(Teo2$long, Teo2$lat, weight = 3, radius = 1, color = '#9D7', 
-                       opacity = 1,
-                       popup = paste(sep = " ",
-                                      "Taxa:",Teo2$Taxa,"<br/>", 
-                                     "Municipio:",Teo2$Municipio, "<br/>",
-                                     "Localidad:",Teo2$Localidad))
-    } 
-    #else {
-    #  updateSelectInput(session, input$teocintle, selected = "")
-    #  proxy2 %>% 
-    #   removeMarker("long")
-    #}
-  })
+ 
   
   
   

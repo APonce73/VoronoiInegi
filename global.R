@@ -4,14 +4,14 @@ library(deldir)
 library(tidyverse)
 library(rgdal)
 #library(mxmaps)
-library(plotly)
+#library(plotly)
 library(latticeExtra)
-library(ggforce)
+#library(ggforce)
 library(plyr)
 library(dplyr)
 
 getwd()
-setwd('~/Dropbox/GitHub/VoronoiInegi/')
+#setwd('~/Dropbox/GitHub/VoronoiInegi/')
 
 
 ########################
@@ -23,6 +23,10 @@ setwd('~/Dropbox/GitHub/VoronoiInegi/')
 
 SPointsDF_to_voronoi_SPolysDF <- function(sp) {
   
+  if (is.null(sp) || is.na(sp))
+  {
+    return()
+  }
   # tile.list extracts the polygon data from the deldir computation
   vor_desc <- tile.list(deldir(sp@coords[,1], sp@coords[,2]))
   
@@ -63,7 +67,7 @@ names(Mex)[7:8] <- c("lng", "lat")
 names(Mex)[7:8]
 
 #Aqui escojo el estado
-target1 <- c("Puebla", "Tlaxcala", "Mexico", "Distrito Federal")
+#target1 <- c("Puebla", "Tlaxcala", "Mexico", "Distrito Federal")
 
 Mex2 <- Mex %>%
   select(CVE_EDO, CVE_MUN, CVE_LOC, lng, lat, NOM_MUN, NOM_LOC, NOM_ENT) %>%
@@ -146,11 +150,11 @@ summary(EdoTT)
 #  filter(Abasto.de.maíz == "No dispone") %>%
 #  na.omit()
 
-summary(EdoTT1)
+#summary(EdoTT1)
 
 
 #Aqui cambio el estado
-Edo <- bind_rows(Edo01,Edo02,Edo03,Edo04,Edo05,Edo06,Edo07,Edo08,Edo09,Edo10,
+Edo <- rbind(Edo01,Edo02,Edo03,Edo04,Edo05,Edo06,Edo07,Edo08,Edo09,Edo10,
                  Edo11,Edo12,Edo13,Edo14,Edo15,Edo16,Edo17,Edo18,Edo19,Edo20,
                  Edo21,Edo22,Edo23,Edo24,Edo25,Edo26,Edo27,Edo28,Edo29,Edo30,
                  Edo31,Edo32)
@@ -162,6 +166,7 @@ summary(Edo$Nombre.de.la.entidad)
 head(Edo)
 names(Edo)
 
+#Para seleccionar los mercados
 Edo100 <- Edo %>%
   select(Clave.de.entidad.federativa,
          Clave.de.municipio.o.delegación,
@@ -176,7 +181,7 @@ Edo100 <- Edo %>%
 Edo100  
 summary(Edo100)
 dim(Edo100)
-names(Edo100) <- c("CVE_EDO", "CVE_MUN", "CVE_LOC","Nombre","Tianguis")
+names(Edo100) <- c("CVE_EDO", "CVE_MUN", "CVE_LOC","Nombre","Variable1")
 names(Edo100)
 head(Edo100)
 Edo100$CVE_EDO <- sprintf("%02d", Edo100$CVE_EDO)
@@ -191,26 +196,17 @@ Edo100$CVE_LOC <- as.factor(Edo100$CVE_LOC)
 head(Edo100)
 Edo100 <- Edo100 %>%
   mutate(FullCode = paste(CVE_EDO,CVE_MUN,CVE_LOC, sep = "")) %>%
-  select(Tianguis, FullCode)
+  select(Variable1, FullCode)
 
 head(Mex2)
 head(Edo100)
 
 TianguisFF <- inner_join(Edo100,Mex2, by = "FullCode")
 dim(TianguisFF)
-
 head(TianguisFF)
-names(TianguisFF)
-summary(TianguisFF)
-vtess <- deldir(TianguisFF[,6:7])
-class(vtess)
-summary(vtess)
-dim(as.data.frame(vtess$summary$dir.area))
+#########
 
-summary(vtess$delsgs)
-summary(vtess$dirsgs)
-summary(vtess$ind.orig)
-
+#Paara seleccioanr los sitios con abasto de maíz y sin abasto
 
 names(Edo)
 summary(Edo)
@@ -233,7 +229,7 @@ dim(EdoHH)
 EdoHH  
 
 dim(EdoHH)
-names(EdoHH) <- c("CVE_EDO", "CVE_MUN", "CVE_LOC","Nombre","Tianguis")
+names(EdoHH) <- c("CVE_EDO", "CVE_MUN", "CVE_LOC","Nombre","Variable1")
 names(EdoHH)
 head(EdoHH)
 EdoHH$CVE_EDO <- sprintf("%02d", EdoHH$CVE_EDO)
@@ -248,74 +244,70 @@ EdoHH$CVE_LOC <- as.factor(EdoHH$CVE_LOC)
 head(EdoHH)
 EdoHH <- EdoHH %>%
   mutate(FullCode = paste(CVE_EDO,CVE_MUN,CVE_LOC, sep = "")) %>%
-  select(Tianguis, FullCode)
+  select(Variable1, FullCode)
 
+  
+  #factor(Variable1)
+
+class(EdoHH)
+str(EdoHH)
 head(Mex2)
 head(EdoHH)
 
 TianguisHH <- inner_join(EdoHH,Mex2, by = "FullCode")
-dim(TianguisHH)
-head(TianguisHH)
 
 
+#dim(TianguisHH)
+#head(TianguisHH)
 
-dim(TianguisFF)
-dim(TianguisHH)
-FinalTT <- bind_rows(TianguisFF, TianguisHH)
-FinalTT <- FinalTT %>%
+#dim(TianguisFF)
+#dim(TianguisHH)
+
+#str(TianguisFF)
+#str(TianguisHH)
+
+
+FinalTT <- rbind(TianguisHH, TianguisFF) %>% 
   distinct()
 
-dim(FinalTT)
+#head(FinalTT)
+#tail(FinalTT)
+#str(TianguisHH)
+#str(FinalTT)
+
+#Para hacer el voronoir
 
 
-FinalTT$Tianguis <- as.factor(FinalTT$Tianguis)
-head(FinalTT)
-summary(FinalTT)
-leaflet(data = FinalTT) %>% 
-  addTiles() %>%
-  addCircleMarkers(~lng, ~lat, radius = 2, col = "black",
-                   popup = paste(sep = " ","Municipio:",TianguisFF$NOM_MUN,
-                                 "<br/>","Localidad:",TianguisFF$NOM_LOC),
-                   clusterOptions = markerClusterOptions(showCoverageOnHover = T, 
-                                                         spiderfyOnMaxZoom = T,
-                                                         zoomToBoundsOnClick = T,
-                                                         spiderfyDistanceMultiplier = 2)) %>%
-  #Select the kind of map: http://leaflet-extras.github.io/leaflet-providers/preview/
-  addProviderTiles("OpenStreetMap.DE")
-#addProviderTiles("Thunderforest.Pioneer")
-
-
-head(FinalTT)
-summary(FinalTT)
-FinalTT$Tipo
 
 #Tipo
-pal <- colorFactor(c("navy", "red", "black"), domain = c("Tianguis", "Maiz", "Sin_Maiz"))
+#pal <- colorFactor(c("navy", "red", "black"), domain = c("Tianguis", "Maiz", "Sin_Maiz"))
 #pal <- colorFactor(c("navy", "red"), domain = c("No dispone", "Dispone"))
 
 
-leaflet(data = FinalTT) %>% 
-  addTiles() %>%
-  addCircleMarkers(~lng, ~lat, 
-                   popup = paste(sep = " ","Municipio:",FinalTT$NOM_MUN,
-                                 "<br/>","Localidad:",FinalTT$NOM_LOC,
-                                 "<br/>","Tipo:",FinalTT$Tianguis),
-                   radius = ~ifelse(Tianguis == "Tianguis", 10, 6),
-                   color = ~pal(Tianguis),
-                   stroke = FALSE, fillOpacity = 0.5) %>%
-  #Select the kind of map: http://leaflet-extras.github.io/leaflet-providers/preview/
-  addProviderTiles("OpenStreetMap.DE")
+#leaflet(data = FinalTT) %>% 
+#  addTiles() %>%
+#  addCircleMarkers(~lng, ~lat, 
+#                   popup = paste(sep = " ","Municipio:",FinalTT$NOM_MUN,
+#                                 "<br/>","Localidad:",FinalTT$NOM_LOC,
+#                                 "<br/>","Tipo:",FinalTT$Tianguis),
+#                   radius = ~ifelse(Tianguis == "Tianguis", 10, 6),
+#                   color = ~pal(Tianguis),
+#                   stroke = FALSE, fillOpacity = 0.5) %>%
+#  #Select the kind of map: http://leaflet-extras.github.io/leaflet-providers/preview/
+#  addProviderTiles("OpenStreetMap.DE")
 #addProviderTiles("Thunderforest.Pioneer")
 
 
 
-head(TianguisFF[,6:7])
+#head(TianguisFF[,6:7])
 
-vor_pts <- SpatialPointsDataFrame(cbind(TianguisFF$lng,
-                                        TianguisFF$lat),
-                                  TianguisFF, match.ID = TRUE)
+#vor_pts <- SpatialPointsDataFrame(cbind(TianguisFF$lng,
+#                                        TianguisFF$lat),
+#                                  TianguisFF, match.ID = TRUE)
+#
+#vor <- SPointsDF_to_voronoi_SPolysDF(vor_pts)
 
-vor <- SPointsDF_to_voronoi_SPolysDF(vor_pts)
+
 #vor
 
 #FinalTT1 <- FinalTT %>%
@@ -332,39 +324,56 @@ vor <- SPointsDF_to_voronoi_SPolysDF(vor_pts)
 
 
 
-leaflet() %>% 
-  #  addTiles() %>%
-  addProviderTiles("OpenStreetMap.DE") %>%
-  
-  addPolygons(data = vor,
-              stroke = T, color = "green", weight = 2,
-              fill = F, fillOpacity = 0.0,
-              smoothFactor = 0.5
+#leaflet() %>% 
+#  #  addTiles() %>%
+#  addProviderTiles("OpenStreetMap.DE") %>%
+#  
+#  addPolygons(data = vor,
+#              stroke = T, color = "green", weight = 2,
+#              fill = F, fillOpacity = 0.0,
+#              smoothFactor = 0.5
               #popup = sprintf("Total In/Out: %s",
               #              as.character(vor@data$tot))
-  ) %>%
+#  ) %>%
   #Para los tianguis
-  addCircleMarkers(data = TianguisFF, 
-                   ~lng, ~lat, 
-                   popup = paste(sep = " ","Municipio:",TianguisFF$NOM_MUN,
-                                 "<br/>","Localidad:",TianguisFF$NOM_LOC,
-                                 "<br/>","Tipo:",TianguisFF$Tianguis),
-                   radius = ~ifelse(Tianguis == "Tianguis", 7, 6),
-                   color = ~pal(Tianguis),
-                   stroke = FALSE, fillOpacity = 0.5) %>%
+ # addCircleMarkers(data = TianguisFF, 
+#                   ~lng, ~lat, 
+#                   popup = paste(sep = " ","Municipio:",TianguisFF$NOM_MUN,
+#                                 "<br/>","Localidad:",TianguisFF$NOM_LOC,
+#                                 "<br/>","Tipo:",TianguisFF$Tianguis),
+#                   radius = ~ifelse(Tianguis == "Tianguis", 7, 6),
+#                   color = ~pal(Tianguis),
+#                   stroke = FALSE, fillOpacity = 0.5) %>%
                    
   #Para los sitios con maíz
-  addCircleMarkers(data = TianguisHH, 
-                   ~lng, ~lat, 
-                   popup = paste(sep = " ","Municipio:",TianguisHH$NOM_MUN,
-                                 "<br/>","Localidad:",TianguisHH$NOM_LOC,
-                                 "<br/>","Tipo:",TianguisHH$Tianguis),
-                   radius = ~ifelse(Tianguis == "Tianguis", 4, 6),
-                   color = ~pal(Tianguis),
-                   stroke = FALSE, fillOpacity = 0.5,
-                   clusterOptions = markerClusterOptions(showCoverageOnHover = T, 
-                                                         spiderfyOnMaxZoom = T,
-                                                         zoomToBoundsOnClick = T,
-                                                         spiderfyDistanceMultiplier = 2))
+#  addCircleMarkers(data = TianguisHH, 
+#                   ~lng, ~lat, 
+#                   popup = paste(sep = " ","Municipio:",TianguisHH$NOM_MUN,
+#                                 "<br/>","Localidad:",TianguisHH$NOM_LOC,
+#                                 "<br/>","Tipo:",TianguisHH$Tianguis),
+#                   radius = ~ifelse(Tianguis == "Tianguis", 4, 6),
+#                   color = ~pal(Tianguis),
+#                   stroke = FALSE, fillOpacity = 0.5,
+#                   clusterOptions = markerClusterOptions(showCoverageOnHover = T, 
+#                                                         spiderfyOnMaxZoom = T,
+#                                                         zoomToBoundsOnClick = T,
+#                                                         spiderfyDistanceMultiplier = 2))
   
 
+
+
+
+
+#caixa <- function(x){
+#  print("mutilicado por 12")
+#  a <- x * 12
+#  print(a)
+#  print("mutilicado por 11")
+#  b <- x * 11
+#  print(b)
+#  print("mutilicado por 6")
+#  b <- x * 6
+#  print(b)
+#}
+
+#caixa(12)
