@@ -6,3 +6,9 @@ al mismo tiempo poner las localidades con y sin abastecimiento de maíz
 
 Los datos son de INEGI
 http://www3.inegi.org.mx/sistemas/SCITEL/default?ev=8 
+
+El Shiny lo pueden encontrar aquí:
+
+https://conabio.shinyapps.io/VoronoiInegi/
+
+
